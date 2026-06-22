@@ -35,8 +35,13 @@ const artifactsDir = path.join(root, "artifacts");
 const distDir = path.join(root, "dist-npm");
 const mainSrc = path.join(root, "npm", MAIN_PKG);
 
+// npm 反垃圾会拦截包名中的 "win32"，故 Windows 名段用 "windows"
+// （package.json 的 os 字段仍用 node 的 "win32"，仅包名不同）。
+function osSegment(os) {
+  return os === "win32" ? "windows" : os;
+}
 function subPkgName(p) {
-  return `swagger-api-rs-${p.os}-${p.cpu}`;
+  return `swagger-api-rs-${osSegment(p.os)}-${p.cpu}`;
 }
 
 function rmrf(p) {

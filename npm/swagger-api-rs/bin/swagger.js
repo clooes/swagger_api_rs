@@ -6,7 +6,9 @@ const { execFileSync } = require("node:child_process");
 function binaryPath() {
   const { platform, arch } = process;
   const ext = platform === "win32" ? ".exe" : "";
-  const pkg = `swagger-api-rs-${platform}-${arch}`;
+  // 包名段：win32 → windows（避开 npm 对 "win32" 的反垃圾拦截）
+  const osSeg = platform === "win32" ? "windows" : platform;
+  const pkg = `swagger-api-rs-${osSeg}-${arch}`;
   try {
     // 子包内二进制固定位于 bin/swagger[.exe]
     return require.resolve(`${pkg}/bin/swagger${ext}`);

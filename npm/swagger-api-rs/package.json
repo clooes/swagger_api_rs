@@ -26,6 +26,6 @@
     "swagger-api-rs-darwin-x64": "0.0.0",
     "swagger-api-rs-linux-x64": "0.0.0",
     "swagger-api-rs-linux-arm64": "0.0.0",
-    "swagger-api-rs-win32-x64": "0.0.0"
+    "swagger-api-rs-windows-x64": "0.0.0"
   }
 }
