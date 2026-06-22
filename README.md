@@ -22,6 +22,43 @@ Swagger JSON ──解析──> OpenAPI 模型 ──lowering──> IR(语言�
 
 详细设计与类型映射规则见 [MIGRATION.md](./MIGRATION.md)。
 
+## 命令速查
+
+```bash
+# ── 构建 ──
+cargo build                      # debug 构建 → target/debug/swagger
+cargo build --release            # release 构建（strip+lto）→ target/release/swagger
+cargo install --path .           # 安装到本机（二进制名 swagger）
+
+# ── 测试 ──
+cargo test                       # 全部测试
+cargo test <用例名片段>          # 跑匹配的用例（如 cargo test diff）
+cargo test -- --nocapture        # 显示测试内 println
+INSTA_UPDATE=always cargo test   # 更新快照（改了生成逻辑后，review 后提交）
+
+# ── 使用（在含 swagger.json 的项目目录）──
+swagger                          # 生成 + 打印本次变更
+swagger --file=foo               # 读取 swagger.foo.json
+swagger --no-diff                # 生成但不打印变更
+swagger --diff-only              # 仅预览变更，不写文件/缓存
+swagger --help / --version
+
+# 代理后无法访问目标域名时（reqwest 尊重 NO_PROXY）
+NO_PROXY=your.host swagger
+
+# ── npm 本地预演（不发布）──
+# 先把各 target 二进制放到 artifacts/<target>/swagger[.exe]
+node scripts/build-npm.mjs 1.0.0           # 仅生成 dist-npm/
+node scripts/build-npm.mjs 1.0.0 --publish # 实际发布（需 npm login）
+
+# ── 发布新版本（CI 自动）──
+# 1) 对齐 Cargo.toml 的 version 与 tag
+# 2) 打 tag 触发 GitHub Actions：
+git tag v1.0.0 && git push origin v1.0.0
+# 重新触发同一 tag（必须先删远端 tag 再推，force-push 不触发）：
+git push origin :refs/tags/v1.0.0 && git push origin v1.0.0
+```
+
 ## 安装
 
 ```bash
