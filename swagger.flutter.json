@@ -1,0 +1,14 @@
+{
+    "url": "http://zhtc.host",
+    "suffix": "/api-patrol",
+    "output": "lib/api",
+    "language": "flutter",
+    "header": [
+        "import 'package:dio/dio.dart';",
+        "import 'package:image_picker/image_picker.dart';",
+        "import 'package:kll_patrol/tools/dio_util/dio_util.dart';"
+    ],
+    "filter": [
+        "/common/oss/ali"
+    ]
+}

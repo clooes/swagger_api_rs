@@ -1,0 +1,144 @@
+---
+source: src/snapshot_tests.rs
+expression: "generate(Language::Javascript)"
+---
+/**
+ * @typedef {Object} Paging
+ * @property {number} [pageNum]
+ * @property {number} [pageSize]
+ */
+
+/**
+ * @typedef {Object} IPage
+ * @property {number} current
+ * @property {number} pages
+ * @property {Array} records
+ * @property {number} size
+ * @property {number} total
+ */
+
+/**
+ * @typedef {Object} MsgType
+ * @property {string} node
+ * @property {number} type
+ * @property {number} [value]
+ */
+
+/**
+ * @description: 用户信息
+ * @return {*}
+ */
+export const get_user_info = async () => {
+  const res = await server.GET (`/user/info`);
+  return res?.result;
+};
+
+/**
+ * @typedef {Object} GetUserId
+ * @property {string} [id]
+ */
+/**
+ * @description: 用户详情
+ * @param {GetUserId} [params]
+ * @return {*}
+ */
+export const get_user_id = async (params) => {
+  const res = await server.GET (`/user/${params?.id}`);
+  return res?.result;
+};
+
+/**
+ * @description: 登录
+ * @param {LoginDto} [data]
+ * @return {*}
+ */
+export const post_login = async (data) => {
+  const res = await server.POST (`/login`, {data});
+  return res?.result;
+};
+
+/**
+ * @typedef {Object} GetPage
+ * @property {string} [keyword]
+ * @property {number} [pageNum]
+ * @property {number} [pageSize]
+ */
+/**
+ * @description: 分页
+ * @param {GetPage} [params]
+ * @return {*}
+ */
+export const get_page = async (params) => {
+  const res = await server.GET (`/page`, {params});
+  return res?.result;
+};
+
+/**
+ * @typedef {Object} PostUpload
+ * @property {*} [key]
+ */
+/**
+ * @description: 上传
+ * @param {PostUpload} [params]
+ * @return {*}
+ */
+export const post_upload = async (params) => {
+  const formdata = new FormData();
+  for (const key in params) {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      const element = params[key];
+      formdata.set(key, element);
+    }
+  }
+  const res = await server.POST (`/upload`, {data:formdata});
+  return res?.success;
+};
+
+/**
+ * @description: 列表
+ * @return {*}
+ */
+export const get_list = async () => {
+  const res = await server.GET (`/list`);
+  return res?.result ?? [];
+};
+
+/**
+ * @description: 统计
+ * @return {*}
+ */
+export const post_stats = async () => {
+  const res = await server.POST (`/stats`);
+  return res?.result;
+};
+
+/**
+ * @description: 导出报表
+ * @return {*}
+ */
+export const get_report_export = async () => {
+  const res = await server.GET (`/report/export`, {responseType: 'arraybuffer'});
+  if (res instanceof ArrayBuffer) {
+    return res;
+  } else {
+    return null;
+  }
+};
+
+/**
+ * @typedef {Object} UserVo
+ * @property {string} [id] ID
+ * @property {string} [name] 姓名
+ * @property {Tag[]} [tags]
+ */
+
+/**
+ * @typedef {Object} Tag
+ * @property {string} [label]
+ */
+
+/**
+ * @typedef {Object} LoginDto
+ * @property {string} [phone] 手机号
+ * @property {string} [code] 验证码
+ */

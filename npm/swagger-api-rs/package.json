@@ -1,0 +1,31 @@
+{
+  "name": "swagger-api-rs",
+  "version": "0.0.0",
+  "description": "Swagger/OpenAPI 接口文档转前端代码（TypeScript / JavaScript / Flutter），Rust 实现",
+  "bin": {
+    "swagger": "bin/swagger.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "keywords": [
+    "swagger",
+    "openapi",
+    "codegen",
+    "typescript",
+    "flutter",
+    "dart"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mynaner/swagger-api-ts"
+  },
+  "optionalDependencies": {
+    "swagger-api-rs-darwin-arm64": "0.0.0",
+    "swagger-api-rs-darwin-x64": "0.0.0",
+    "swagger-api-rs-linux-x64": "0.0.0",
+    "swagger-api-rs-linux-arm64": "0.0.0",
+    "swagger-api-rs-win32-x64": "0.0.0"
+  }
+}

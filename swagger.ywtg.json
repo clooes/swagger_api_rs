@@ -1,0 +1,13 @@
+{
+  "url": "http://ywtg.host",
+  "suffix": "/api-admin",
+  "output": "test/index",
+  "deprecated": true,
+  "filter": [
+    "/dev/query"
+  ],
+  "header": [
+    "import { server } from '@/utils/network';",
+    "type Long = string"
+  ]
+}

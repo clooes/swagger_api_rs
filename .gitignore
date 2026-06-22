@@ -1,0 +1,15 @@
+/target
+
+# 生成产物 / 临时输出（由配置文件 output 指定，会被重建）
+/src/api
+/tmp_out
+/tmp_dart
+/tmp_js
+
+# IR 缓存（在 output 目录内，由工具维护）
+.swagger-ir.json
+
+# npm 发布中间产物（由 CI / build-npm.mjs 生成）
+/artifacts
+/dist-npm
+*.tgz

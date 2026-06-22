@@ -1,0 +1,19 @@
+---
+source: src/snapshot_tests.rs
+expression: "render(&diff(&old, &new), false)"
+---
+本次变更:
+  接口: +1 ~1 -1 ↻1
+  模型: +0 ~1 -1 ↻1
+
+  ↻ 重命名接口 get_v1_thing → get_v2_thing
+  + 新增接口 post_new_added
+  ~ 修改接口 get_modified
+      返回类型: bool → int
+  - 删除接口 get_old_removed
+  ↻ 重命名模型 UserVo → UserInfoVo
+  ~ 修改模型 OrderVo
+      ~ 字段 amount: long → string
+      + 字段 remark
+      - 字段 old
+  - 删除模型 RemovedVo

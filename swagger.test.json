@@ -1,0 +1,7 @@
+{
+    "url": "http://zhtc.host",
+    "suffix": "/api-app",
+    "output": "tmp_out",
+    "language": "ts",
+    "header": []
+}

@@ -1,0 +1,138 @@
+---
+source: src/snapshot_tests.rs
+expression: "generate(Language::Typescript)"
+---
+export interface Paging {
+  pageNum?: number;
+  pageSize?: number;
+  [key: string]: any;
+}
+
+export interface IPage<T> {
+  current: number;
+  pages: number;
+  records: T[];
+  size: number;
+  total: number;
+}
+
+export interface MsgType {
+  node: string;
+  type: number;
+  value?: number;
+}
+
+/**
+ * @description: 用户信息
+ * @return {*}
+ */
+export const get_user_info = async () => {
+  const res = await server.GET<UserVo> (`/user/info`);
+  return res?.result;
+};
+
+export interface GetUserId {
+  id?: string;
+}
+/**
+ * @description: 用户详情
+ * @param {GetUserId} params?
+ * @return {*}
+ */
+export const get_user_id = async (params?:GetUserId) => {
+  const res = await server.GET<boolean> (`/user/${params?.id}`);
+  return res?.result;
+};
+
+/**
+ * @description: 登录
+ * @param {LoginDto} data?
+ * @return {*}
+ */
+export const post_login = async (data?:LoginDto) => {
+  const res = await server.POST<UserVo> (`/login`, {data});
+  return res?.result;
+};
+
+export interface GetPage extends Paging {
+  keyword?: string;
+}
+/**
+ * @description: 分页
+ * @param {GetPage} params?
+ * @return {*}
+ */
+export const get_page = async (params?:GetPage) => {
+  const res = await server.GET<IPage<UserVo>> (`/page`, {params});
+  return res?.result;
+};
+
+export interface PostUpload {
+  [key:string]: any;
+}
+/**
+ * @description: 上传
+ * @param {PostUpload} params?
+ * @return {*}
+ */
+export const post_upload = async (params?:PostUpload) => {
+  const formdata = new FormData();
+  for (const key in params) {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      const element = params[key];
+      formdata.set(key, element);
+    }
+  }
+  const res = await server.POST (`/upload`, {data:formdata});
+  return res?.success;
+};
+
+/**
+ * @description: 列表
+ * @return {*}
+ */
+export const get_list = async () => {
+  const res = await server.GET<UserVo[]> (`/list`);
+  return res?.result ?? [];
+};
+
+/**
+ * @description: 统计
+ * @return {*}
+ */
+export const post_stats = async () => {
+  const res = await server.POST<{[key:string]:number}> (`/stats`);
+  return res?.result;
+};
+
+/**
+ * @description: 导出报表
+ * @return {*}
+ */
+export const get_report_export = async () => {
+  const res = await server.GET<ArrayBuffer> (`/report/export`, {responseType: 'arraybuffer'});
+  if (res instanceof ArrayBuffer) {
+    return res as ArrayBuffer;
+  } else {
+    return null;
+  }
+};
+
+export interface UserVo {
+  /** ID */
+  id?: string;
+  /** 姓名 */
+  name?: string;
+  tags?: Tag[];
+}
+
+export interface Tag {
+  label?: string;
+}
+
+export interface LoginDto {
+  /** 手机号 */
+  phone?: string;
+  /** 验证码 */
+  code?: string;
+}

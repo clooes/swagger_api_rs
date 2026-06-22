@@ -1,0 +1,207 @@
+---
+source: src/snapshot_tests.rs
+expression: "generate(Language::Flutter)"
+---
+class IPage<T> {
+  int? pages;
+  List<T>? records;
+  int? total;
+  int? size;
+  int? current;
+
+  IPage({this.pages, this.records, this.total, this.size, this.current});
+
+  IPage.fromJson(
+      Map<String, dynamic> json, Function(Map<String, dynamic>) fromJsonModel) {
+    pages = json['pages'];
+    if (json['records'] != null) {
+      records = <T>[];
+      json['records'].forEach((v) {
+        records?.add(fromJsonModel(v));
+      });
+    }
+    total = json['total'];
+    size = json['size'];
+    current = json['current'];
+  }
+}
+
+class MsgType {
+  String? node;
+  int? type;
+  bool? status;
+  bool? free;
+  bool? ppl;
+  bool? special;
+  int? value;
+
+  MsgType({this.node, this.type, this.free, this.value, this.ppl, this.special});
+
+  MsgType.fromJson(Map<String, dynamic> json) {
+    node = json['node'];
+    if (json['type'] is int) {
+      type = json['type'];
+    }
+    if (json['type'] is bool) {
+      status = json['type'];
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['node'] = node;
+    data['type'] = type ?? status;
+    return data;
+  }
+}
+
+/// 用户信息
+Future<UserVo?> getUserInfo() async {
+  var res = await DioUtil.instance.request<UserVo>("/user/info",
+        method: DioMethod.get, params: {},
+        fromJson: (data) {
+          return UserVo.fromJson(data);
+        });
+  return res.result;
+}
+
+/// 用户详情
+Future<bool?> getUserId({String? id}) async {
+  var res = await DioUtil.instance.request<bool>("/user/$id",
+        method: DioMethod.get, params: {});
+  return res.result;
+}
+
+/// 登录
+Future<UserVo?> postLogin({required LoginDto data}) async {
+  var res = await DioUtil.instance.request<UserVo>("/login",
+        method: DioMethod.post, params: {},
+        data: data.toJson(),
+        fromJson: (data) {
+          return UserVo.fromJson(data);
+        });
+  return res.result;
+}
+
+/// 分页
+Future<IPage<UserVo>?> getPage({String? keyword, int? pageNum, int? pageSize}) async {
+  var res = await DioUtil.instance.request<IPage<UserVo>>("/page",
+        method: DioMethod.get, params: {"keyword":keyword,"pageNum":pageNum,"pageSize":pageSize},
+        fromJson: (data) {
+          return IPage<UserVo>.fromJson(data, UserVo.fromJson);
+        });
+  return res.result;
+}
+
+/// 上传
+Future<bool> postUpload({XFile? file}) async {
+  MultipartFile? fd;
+  if (file != null) {
+    fd = await MultipartFile.fromFile(file.path);
+  }
+  FormData formData = FormData.fromMap({
+    "file": fd
+  });
+  var res = await DioUtil.instance.request<void>("/upload",
+        method: DioMethod.post, params: {},
+        data: formData);
+  return res.success;
+}
+
+/// 列表
+Future<List<UserVo>> getList() async {
+  var res = await DioUtil.instance.request<List<UserVo>>("/list",
+        method: DioMethod.get, params: {},
+        fromJson: (data) {
+          List<UserVo> list = [];
+          if (data != null) {
+            for (var item in data) {
+              list.add(UserVo.fromJson(item));
+            }
+          }
+          return list;
+        });
+  return res.result ?? [];
+}
+
+/// 统计
+Future<Map<String,int>?> postStats() async {
+  var res = await DioUtil.instance.request<Map<String,int>>("/stats",
+        method: DioMethod.post, params: {});
+  return res.result;
+}
+
+/// 导出报表
+Future<ArrayBuffer?> getReportExport() async {
+  var res = await DioUtil.instance.request<ArrayBuffer>("/report/export",
+        method: DioMethod.get, params: {});
+  return res.result;
+}
+
+class UserVo {
+  /// ID
+  String? id;
+  /// 姓名
+  String? name;
+  List<Tag>? tags;
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['name'] = name;
+    if (tags != null) {
+      data['tags'] = tags?.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+
+  UserVo({this.id, this.name, this.tags});
+
+  UserVo.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    name = json['name'];
+    if (json['tags'] != null) {
+      tags = [];
+      json['tags'].forEach((v) {
+        tags?.add(Tag.fromJson(v));
+      });
+    }
+  }
+}
+
+class Tag {
+  String? label;
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['label'] = label;
+    return data;
+  }
+
+  Tag({this.label});
+
+  Tag.fromJson(Map<String, dynamic> json) {
+    label = json['label'];
+  }
+}
+
+class LoginDto {
+  /// 手机号
+  String? phone;
+  /// 验证码
+  String? code;
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['phone'] = phone;
+    data['code'] = code;
+    return data;
+  }
+
+  LoginDto({this.phone, this.code});
+
+  LoginDto.fromJson(Map<String, dynamic> json) {
+    phone = json['phone'];
+    code = json['code'];
+  }
+}

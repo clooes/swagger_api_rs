@@ -1,0 +1,10 @@
+{
+    "url": "http://dpa.host",
+    "suffix": "",
+    "output": "src/api",
+    "deprecated": true,
+    "header": [
+        "import { server } from '@/utils/axios/request';",
+        "import { TccCarType } from '@/types';"
+    ]
+}
