@@ -533,6 +533,35 @@ try {
 - `npm pack` 主包与某个子包，在干净目录 `npm i ./*.tgz` 验证启动器能定位并执行二进制。
 - 测试 `--ignore-scripts` 场景（本方案应仍可用，因为不依赖 postinstall）。
 - 测试缺失平台时的报错信息是否清晰（14.3 的错误提示）。
+- 注意：用 `file:`/本地 tarball 安装会因 npm 把本地包做成符号链接、且会去 registry 查不存在的
+  optional 子包而干扰验证。最可靠的方式是**手搭真实 node_modules 布局**（主包 + 当前平台子包）
+  直接跑启动器，这才是 registry 安装后的实际形态。
+
+### 14.8 实际落地与踩坑（v1.0.0 实测）
+
+> 14.1–14.7 为最初规划。实际实现有以下确定项与偏差，**以本节为准**。
+
+实际命名（不带 scope，无需 npm org）：
+- 主包：`swagger-api-rs`
+- 子包：`swagger-api-rs-darwin-arm64` / `-darwin-x64` / `-linux-x64` / `-linux-arm64` / **`-windows-x64`**
+
+实测踩坑与解决：
+
+| 现象 | 原因 | 解决 |
+|------|------|------|
+| `npm error code EOTP`（要求一次性密码） | NPM_TOKEN 非 Automation 类型 / 账号写操作 2FA | 必须用 **Automation** token |
+| `swagger-api-rs-win32-x64` `E403 spam detection` | npm 反垃圾**拦截包名中的 `win32`**（其余 darwin/linux + x64 均正常） | 包名段用 `windows`；启动器把 `process.platform==="win32"` 映射为 `windows`（os 字段仍填 `win32`） |
+| `cross` 编译 `aarch64-unknown-linux-gnu` 失败 | cross 容器内 Rust 过旧，不支持 `edition 2024` | 改用 GitHub 原生 arm64 runner `ubuntu-24.04-arm`，原生 `cargo build`，不再用 cross |
+| 失败重跑在已发布子包上中断 | npm 不允许覆盖同版本 | `build-npm.mjs` 发布前 `npm view name@ver` 判断，**已存在则跳过**（幂等） |
+
+发布触发要点：
+- tag 未移动时 `git push -f` 不会重新触发，需**先删远端 tag 再推**：
+  `git push origin :refs/tags/vX && git push origin vX`。
+- 发布顺序：所有子包先发、主包后发。
+- 版本号来自 tag（`GITHUB_REF_NAME` 去掉 `v`），需与 `Cargo.toml` 的 version 对齐。
+
+相关文件：`npm/swagger-api-rs/`（主包+启动器）、`scripts/build-npm.mjs`（组装+幂等发布）、
+`.github/workflows/release.yml`（matrix 编译 + 发布）。
 
 ---
 

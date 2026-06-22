@@ -97,23 +97,49 @@ cargo test snapshot_  # 仅快照测试
 
 - 主包：`swagger-api-rs`（`npm/swagger-api-rs/`，含 JS 启动器 `bin/swagger.js`）
 - 平台子包：`swagger-api-rs-<os>-<cpu>`（由 `scripts/build-npm.mjs` 从编译产物生成）
+  - 5 个：`darwin-arm64` / `darwin-x64` / `linux-x64` / `linux-arm64` / **`windows-x64`**
+  - ⚠️ Windows 包名段用 `windows` 而非 `win32`（见下文踩坑），启动器内部把
+    `process.platform === "win32"` 映射到 `windows`
 - CI：`.github/workflows/release.yml`
 
-发布流程：
+### 一次性准备
 
-1. 在仓库 Secrets 配置 `NPM_TOKEN`（具发布权限的 npm token）。
-2. 打 tag 触发：
+1. 在 npm 生成 **Automation** 类型的 token（npm → Access Tokens → Generate New Token →
+   Classic Token → **Automation**）。必须是 Automation 类型，否则 CI 发布会因 2FA 报 `EOTP`。
+2. GitHub 仓库 → Settings → Secrets and variables → Actions → 新增 secret **`NPM_TOKEN`**，
+   值为上面的 token。
+
+### 发布一个版本
+
+1. 对齐版本号（保持 `Cargo.toml` 的 `version` 与要发布的 tag 一致，否则 `swagger --version` 不符）。
+2. 打 tag 并推送触发：
    ```bash
    git tag v1.0.0 && git push origin v1.0.0
    ```
-3. CI 自动：matrix 交叉编译 5 平台二进制 → `build-npm.mjs` 组装子包/主包并注入版本 →
-   先发所有子包、后发主包。
+3. CI 自动：matrix 编译 5 平台二进制（含原生 arm64 runner）→ `build-npm.mjs` 组装子包/主包
+   并注入版本 → **先发所有子包、后发主包**（保证用户装主包时 optionalDeps 已存在）。
+4. 发布脚本是**幂等**的：已存在的 `包@版本` 会跳过，失败后可安全重跑。
 
-本地预演（不发布）：
+> 重新触发同一 tag：tag 没移动时 force-push 不会触发，需先删再推：
+> ```bash
+> git push origin :refs/tags/v1.0.0 && git push origin v1.0.0
+> ```
+
+### 本地预演（不发布）
+
 ```bash
 # 先把各 target 的二进制放到 artifacts/<target>/swagger[.exe]
-node scripts/build-npm.mjs 1.0.0       # 仅生成 dist-npm/
+node scripts/build-npm.mjs 1.0.0            # 仅生成 dist-npm/
 node scripts/build-npm.mjs 1.0.0 --publish  # 实际发布（需已 npm login）
 ```
+
+### 踩坑记录（已在当前配置中解决）
+
+| 现象 | 原因 | 解决 |
+|------|------|------|
+| `EOTP` 要求一次性密码 | NPM_TOKEN 不是 Automation 类型 / 账号开了写操作 2FA | 用 **Automation** token |
+| `win32` 子包 `E403 spam detection` | npm 反垃圾拦截包名中的 `win32` | 包名段改用 `windows` |
+| `cross` 编译 linux-arm64 失败 | cross 容器内 Rust 太旧，不支持 edition 2024 | 改用 GitHub 原生 `ubuntu-24.04-arm` runner |
+| 重跑在已发布包上中断 | npm 不允许覆盖同版本 | 脚本幂等，跳过已存在版本 |
 
 详见 MIGRATION.md §14。
