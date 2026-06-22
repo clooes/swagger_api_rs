@@ -94,13 +94,32 @@ writeJson(path.join(mainDir, "package.json"), mainPkg);
 console.log(`✓ 主包 ${MAIN_PKG}@${version}`);
 
 // 4. 发布（先子包后主包，保证用户安装主包时 optionalDeps 已存在）
-if (doPublish) {
-  for (const dir of subDirs) {
-    console.log(`发布 ${path.basename(dir)} …`);
-    execFileSync("npm", ["publish", "--access", "public"], { cwd: dir, stdio: "inherit" });
+// 幂等：已存在的「包@版本」跳过，便于失败后安全重跑。
+function alreadyPublished(name, ver) {
+  try {
+    const out = execFileSync("npm", ["view", `${name}@${ver}`, "version"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return out.trim() === ver;
+  } catch {
+    return false; // E404 等 → 视为未发布
   }
-  console.log(`发布 ${MAIN_PKG} …`);
-  execFileSync("npm", ["publish", "--access", "public"], { cwd: mainDir, stdio: "inherit" });
+}
+
+function publishDir(dir) {
+  const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+  if (alreadyPublished(pkg.name, pkg.version)) {
+    console.log(`↷ 跳过（已存在）${pkg.name}@${pkg.version}`);
+    return;
+  }
+  console.log(`发布 ${pkg.name}@${pkg.version} …`);
+  execFileSync("npm", ["publish", "--access", "public"], { cwd: dir, stdio: "inherit" });
+}
+
+if (doPublish) {
+  for (const dir of subDirs) publishDir(dir);
+  publishDir(mainDir);
   console.log("✅ 发布完成");
 } else {
   console.log(`\n已在 ${distDir} 生成发布物（未发布）。加 --publish 实际发布。`);
