@@ -13,17 +13,19 @@ use crate::openapi::{ApiDoc, SwaggerConfig};
 
 /// 拉取并解析全部分组的 api-docs。
 pub fn fetch_all(config: &Config) -> Result<Vec<ApiDoc>> {
-    // 显式设置 User-Agent：部分网关/WAF 会拦截无 UA 或库默认指纹的请求。
+    // Swagger 服务通常位于内网。reqwest 默认读取 macOS 系统代理，但不会应用
+    // ClashX/macOS 中配置的忽略主机列表，导致内网域名被送到代理后返回 502。
+    // 因此该客户端始终直连，不受系统代理影响。
     let client = Client::builder()
+        .no_proxy()
         .user_agent(concat!("swagger-api-rs/", env!("CARGO_PKG_VERSION")))
         .build()
         .context("初始化 HTTP client 失败")?;
 
     let config_url = config.swagger_config_url();
     println!("拉取 swagger-config: {config_url}");
-    let swagger_config: SwaggerConfig = get_json(&client, &config_url).with_context(|| {
-        format!("拉取 swagger-config 失败: {config_url}\n{}", proxy_hint(&config.url))
-    })?;
+    let swagger_config: SwaggerConfig = get_json(&client, &config_url)
+        .with_context(|| format!("拉取 swagger-config 失败: {config_url}"))?;
 
     let doc_urls = swagger_config.doc_urls();
     if doc_urls.is_empty() {
@@ -35,29 +37,12 @@ pub fn fetch_all(config: &Config) -> Result<Vec<ApiDoc>> {
         // 对齐原版 getOhterUrls：完整地址 = Base_url + url
         let full = format!("{}{}", config.url, doc_url);
         println!("加载配置文件 {full}");
-        let doc: ApiDoc = get_json(&client, &full)
-            .with_context(|| format!("拉取 api-docs 失败: {full}\n{}", proxy_hint(&config.url)))?;
+        let doc: ApiDoc =
+            get_json(&client, &full).with_context(|| format!("拉取 api-docs 失败: {full}"))?;
         docs.push(doc);
     }
 
     Ok(docs)
-}
-
-/// 拉取失败时的友好提示：多数失败（连接错误 / 502 等）是本机代理拦截内网域名所致。
-fn proxy_hint(url: &str) -> String {
-    let host = host_of(url);
-    format!(
-        "提示：若处于代理后（如本机 Clash/VPN），代理可能拦截了该域名（常见表现为连接失败或 502）。\n\
-         可绕过代理重试：  NO_PROXY={host} swagger\n\
-         或把 {host} 加入系统/代理的「绕过」名单。"
-    )
-}
-
-/// 从 URL 提取主机名（去掉 scheme、路径与端口）。
-fn host_of(url: &str) -> String {
-    let after = url.split("://").nth(1).unwrap_or(url);
-    let hostport = after.split('/').next().unwrap_or(after);
-    hostport.split(':').next().unwrap_or(hostport).to_string()
 }
 
 /// GET 一个 URL 并反序列化为目标类型。
@@ -68,20 +53,10 @@ fn get_json<T: serde::de::DeserializeOwned>(client: &Client, url: &str) -> Resul
         .with_context(|| format!("请求失败: {url}"))?
         .error_for_status()
         .with_context(|| format!("响应状态错误: {url}"))?;
-    let text = resp.text().with_context(|| format!("读取响应体失败: {url}"))?;
-    let value = serde_json::from_str(&text)
-        .with_context(|| format!("响应 JSON 解析失败: {url}"))?;
+    let text = resp
+        .text()
+        .with_context(|| format!("读取响应体失败: {url}"))?;
+    let value =
+        serde_json::from_str(&text).with_context(|| format!("响应 JSON 解析失败: {url}"))?;
     Ok(value)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::host_of;
-
-    #[test]
-    fn extracts_host() {
-        assert_eq!(host_of("http://ywtg.host/api-admin"), "ywtg.host");
-        assert_eq!(host_of("https://a.b.com:8080/x/y"), "a.b.com");
-        assert_eq!(host_of("http://127.0.0.1:8799"), "127.0.0.1");
-    }
 }

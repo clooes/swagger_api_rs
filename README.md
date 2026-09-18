@@ -43,9 +43,6 @@ swagger --no-diff                # 生成但不打印变更
 swagger --diff-only              # 仅预览变更，不写文件/缓存
 swagger --help / --version
 
-# 代理后无法访问目标域名时（reqwest 尊重 NO_PROXY）
-NO_PROXY=your.host swagger
-
 # ── npm 本地预演（不发布）──
 # 先把各 target 二进制放到 artifacts/<target>/swagger[.exe]
 node scripts/build-npm.mjs 1.0.0           # 仅生成 dist-npm/
@@ -115,8 +112,8 @@ swagger --diff-only  # 仅预览变更，不写代码文件、不更新缓存
 工具会拉取 `{url}{suffix}/v3/api-docs/swagger-config`，再拉取其中各分组文档，
 生成到 `{output}/index/index.{ts|js|dart}`。
 
-> **代理提示**：若处于会拦截目标域名的本地代理后，可设 `NO_PROXY=your.host swagger`
-> （reqwest 默认尊重 `NO_PROXY`）。
+> Swagger 拉取客户端默认直连，不读取 ClashX/VPN 等系统代理设置，
+> 以避免内网域名被代理拦截。
 
 ## 开发
 
